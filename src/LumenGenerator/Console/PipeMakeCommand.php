@@ -1,6 +1,6 @@
 <?php
 
-namespace Flipbox\LumenGenerator\Console;
+namespace JocelimJr\LumenGenerator\Console;
 
 class PipeMakeCommand extends GeneratorCommand
 {

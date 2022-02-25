@@ -1,6 +1,6 @@
 <?php
 
-namespace Flipbox\LumenGenerator;
+namespace JocelimJr\LumenGenerator;
 
 use Illuminate\Support\Composer;
 use Illuminate\Support\ServiceProvider;
