@@ -14,6 +14,15 @@ class ClearCompiledCommand extends Command
     protected $name = 'clear-compiled';
 
     /**
+     * The name of the console command.
+     *
+     * This name is used to identify the command during lazy loading.
+     *
+     * @var string|null
+     */
+    protected static $defaultName = 'clear-compiled';
+
+    /**
      * The console command description.
      *
      * @var string
@@ -22,13 +31,19 @@ class ClearCompiledCommand extends Command
 
     /**
      * Execute the console command.
+     *
+     * @return void
      */
     public function handle()
     {
-        $compiledPath = base_path('bootstrap/cache/compiled.php');
-
-        if (file_exists($compiledPath)) {
-            @unlink($compiledPath);
+        if (is_file($servicesPath = $this->laravel->getCachedServicesPath())) {
+            @unlink($servicesPath);
         }
+
+        if (is_file($packagesPath = $this->laravel->getCachedPackagesPath())) {
+            @unlink($packagesPath);
+        }
+
+        $this->info('Compiled services and packages files removed!');
     }
 }

@@ -2,6 +2,8 @@
 
 namespace JocelimJr\LumenGenerator\Console;
 
+use Illuminate\Console\GeneratorCommand;
+
 class CastMakeCommand extends GeneratorCommand
 {
     /**
@@ -10,6 +12,15 @@ class CastMakeCommand extends GeneratorCommand
      * @var string
      */
     protected $name = 'make:cast';
+
+    /**
+     * The name of the console command.
+     *
+     * This name is used to identify the command during lazy loading.
+     *
+     * @var string|null
+     */
+    protected static $defaultName = 'make:cast';
 
     /**
      * The console command description.
@@ -32,7 +43,20 @@ class CastMakeCommand extends GeneratorCommand
      */
     protected function getStub()
     {
-        return __DIR__.'/stubs/cast.stub';
+        return $this->resolveStubPath('/stubs/cast.stub');
+    }
+
+    /**
+     * Resolve the fully-qualified path to the stub.
+     *
+     * @param  string  $stub
+     * @return string
+     */
+    protected function resolveStubPath($stub)
+    {
+        return file_exists($customPath = $this->laravel->basePath(trim($stub, '/')))
+            ? $customPath
+            : __DIR__.$stub;
     }
 
     /**

@@ -2,7 +2,7 @@
 
 namespace JocelimJr\LumenGenerator\Console;
 
-use Illuminate\Support\Str;
+use Illuminate\Console\GeneratorCommand;
 use Symfony\Component\Console\Input\InputOption;
 
 class ResourceMakeCommand extends GeneratorCommand
@@ -13,6 +13,15 @@ class ResourceMakeCommand extends GeneratorCommand
      * @var string
      */
     protected $name = 'make:resource';
+
+    /**
+     * The name of the console command.
+     *
+     * This name is used to identify the command during lazy loading.
+     *
+     * @var string|null
+     */
+    protected static $defaultName = 'make:resource';
 
     /**
      * The console command description.
@@ -31,7 +40,7 @@ class ResourceMakeCommand extends GeneratorCommand
     /**
      * Execute the console command.
      *
-     * @return bool|null
+     * @return void
      */
     public function handle()
     {
@@ -50,8 +59,8 @@ class ResourceMakeCommand extends GeneratorCommand
     protected function getStub()
     {
         return $this->collection()
-                    ? __DIR__.'/stubs/resource-collection.stub'
-                    : __DIR__.'/stubs/resource.stub';
+                    ? $this->resolveStubPath('/stubs/resource-collection.stub')
+                    : $this->resolveStubPath('/stubs/resource.stub');
     }
 
     /**
@@ -62,7 +71,20 @@ class ResourceMakeCommand extends GeneratorCommand
     protected function collection()
     {
         return $this->option('collection') ||
-               Str::endsWith($this->argument('name'), 'Collection');
+               str_ends_with($this->argument('name'), 'Collection');
+    }
+
+    /**
+     * Resolve the fully-qualified path to the stub.
+     *
+     * @param  string  $stub
+     * @return string
+     */
+    protected function resolveStubPath($stub)
+    {
+        return file_exists($customPath = $this->laravel->basePath(trim($stub, '/')))
+                        ? $customPath
+                        : __DIR__.$stub;
     }
 
     /**
@@ -84,7 +106,7 @@ class ResourceMakeCommand extends GeneratorCommand
     protected function getOptions()
     {
         return [
-            ['collection', 'c', InputOption::VALUE_NONE, 'Create a resource collection.'],
+            ['collection', 'c', InputOption::VALUE_NONE, 'Create a resource collection'],
         ];
     }
 }

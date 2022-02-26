@@ -2,7 +2,9 @@
 
 namespace JocelimJr\LumenGenerator\Console;
 
+use Illuminate\Console\GeneratorCommand;
 use Illuminate\Support\Str;
+use LogicException;
 use Symfony\Component\Console\Input\InputOption;
 
 class PolicyMakeCommand extends GeneratorCommand
@@ -13,6 +15,15 @@ class PolicyMakeCommand extends GeneratorCommand
      * @var string
      */
     protected $name = 'make:policy';
+
+    /**
+     * The name of the console command.
+     *
+     * This name is used to identify the command during lazy loading.
+     *
+     * @var string|null
+     */
+    protected static $defaultName = 'make:policy';
 
     /**
      * The console command description.
@@ -31,13 +42,14 @@ class PolicyMakeCommand extends GeneratorCommand
     /**
      * Build the class with the given name.
      *
-     * @param string $name
-     *
+     * @param  string  $name
      * @return string
      */
     protected function buildClass($name)
     {
-        $stub = parent::buildClass($name);
+        $stub = $this->replaceUserNamespace(
+            parent::buildClass($name)
+        );
 
         $model = $this->option('model');
 
@@ -45,30 +57,103 @@ class PolicyMakeCommand extends GeneratorCommand
     }
 
     /**
+     * Replace the User model namespace.
+     *
+     * @param  string  $stub
+     * @return string
+     */
+    protected function replaceUserNamespace($stub)
+    {
+        $model = $this->userProviderModel();
+
+        if (! $model) {
+            return $stub;
+        }
+
+        return str_replace(
+            $this->rootNamespace().'User',
+            $model,
+            $stub
+        );
+    }
+
+    /**
+     * Get the model for the guard's user provider.
+     *
+     * @return string|null
+     *
+     * @throws \LogicException
+     */
+    protected function userProviderModel()
+    {
+        $config = $this->laravel['config'];
+
+        $guard = $this->option('guard') ?: $config->get('auth.defaults.guard');
+
+        if (is_null($guardProvider = $config->get('auth.guards.'.$guard.'.provider'))) {
+            throw new LogicException('The ['.$guard.'] guard is not defined in your "auth" configuration file.');
+        }
+
+        if (! $config->get('auth.providers.'.$guardProvider.'.model')) {
+            return 'App\\Models\\User';
+        }
+
+        return $config->get(
+            'auth.providers.'.$guardProvider.'.model'
+        );
+    }
+
+    /**
      * Replace the model for the given stub.
      *
-     * @param string $stub
-     * @param string $model
-     *
+     * @param  string  $stub
+     * @param  string  $model
      * @return string
      */
     protected function replaceModel($stub, $model)
     {
         $model = str_replace('/', '\\', $model);
 
-        if (Str::startsWith($model, '\\')) {
-            $stub = str_replace('NamespacedDummyModel', trim($model, '\\'), $stub);
+        if (str_starts_with($model, '\\')) {
+            $namespacedModel = trim($model, '\\');
         } else {
-            $stub = str_replace('NamespacedDummyModel', $this->laravel->getNamespace().$model, $stub);
+            $namespacedModel = $this->qualifyModel($model);
         }
 
         $model = class_basename(trim($model, '\\'));
 
-        $stub = str_replace('DummyModel', $model, $stub);
+        $dummyUser = class_basename($this->userProviderModel());
 
-        $stub = str_replace('dummyModelName', Str::camel($model), $stub);
+        $dummyModel = Str::camel($model) === 'user' ? 'model' : $model;
 
-        return str_replace('dummyPluralModelName', Str::plural(Str::camel($model)), $stub);
+        $replace = [
+            'NamespacedDummyModel' => $namespacedModel,
+            '{{ namespacedModel }}' => $namespacedModel,
+            '{{namespacedModel}}' => $namespacedModel,
+            'DummyModel' => $model,
+            '{{ model }}' => $model,
+            '{{model}}' => $model,
+            'dummyModel' => Str::camel($dummyModel),
+            '{{ modelVariable }}' => Str::camel($dummyModel),
+            '{{modelVariable}}' => Str::camel($dummyModel),
+            'DummyUser' => $dummyUser,
+            '{{ user }}' => $dummyUser,
+            '{{user}}' => $dummyUser,
+            '$user' => '$'.Str::camel($dummyUser),
+        ];
+
+        $stub = str_replace(
+            array_keys($replace), array_values($replace), $stub
+        );
+
+        return preg_replace(
+            vsprintf('/use %s;[\r\n]+use %s;/', [
+                preg_quote($namespacedModel, '/'),
+                preg_quote($namespacedModel, '/'),
+            ]),
+            "use {$namespacedModel};",
+            $stub
+        );
     }
 
     /**
@@ -78,18 +163,28 @@ class PolicyMakeCommand extends GeneratorCommand
      */
     protected function getStub()
     {
-        if ($this->option('model')) {
-            return __DIR__.'/stubs/policy.stub';
-        }
+        return $this->option('model')
+                    ? $this->resolveStubPath('/stubs/policy.stub')
+                    : $this->resolveStubPath('/stubs/policy.plain.stub');
+    }
 
-        return __DIR__.'/stubs/policy.plain.stub';
+    /**
+     * Resolve the fully-qualified path to the stub.
+     *
+     * @param  string  $stub
+     * @return string
+     */
+    protected function resolveStubPath($stub)
+    {
+        return file_exists($customPath = $this->laravel->basePath(trim($stub, '/')))
+                        ? $customPath
+                        : __DIR__.$stub;
     }
 
     /**
      * Get the default namespace for the class.
      *
-     * @param string $rootNamespace
-     *
+     * @param  string  $rootNamespace
      * @return string
      */
     protected function getDefaultNamespace($rootNamespace)
@@ -105,7 +200,8 @@ class PolicyMakeCommand extends GeneratorCommand
     protected function getOptions()
     {
         return [
-            ['model', 'm', InputOption::VALUE_OPTIONAL, 'The model that the policy applies to.'],
+            ['model', 'm', InputOption::VALUE_OPTIONAL, 'The model that the policy applies to'],
+            ['guard', 'g', InputOption::VALUE_OPTIONAL, 'The guard that the policy relies on'],
         ];
     }
 }

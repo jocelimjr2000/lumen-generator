@@ -4,6 +4,7 @@ namespace JocelimJr\LumenGenerator;
 
 use Illuminate\Support\Composer;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Routing\Router;
 
 class LumenGeneratorServiceProvider extends ServiceProvider
 {
@@ -43,7 +44,7 @@ class LumenGeneratorServiceProvider extends ServiceProvider
         'ListenerMake' => 'command.listener.make',
         'MailMake' => 'command.mail.make',
         'MiddlewareMake' => 'command.middleware.make',
-        'PipeMake' => 'command.pipe.make',
+        // 'PipeMake' => 'command.pipe.make',
         'ModelMake' => 'command.model.make',
         'PolicyMake' => 'command.policy.make',
         'ProviderMake' => 'command.provider.make',
@@ -89,7 +90,8 @@ class LumenGeneratorServiceProvider extends ServiceProvider
     protected function registerRouteListCommand()
     {
         $this->app->singleton('command.route.list', function ($app) {
-            return new Console\RouteListCommand();
+            $router = app(Router::class);
+            return new Console\RouteListCommand($router);
         });
     }
 
@@ -240,12 +242,12 @@ class LumenGeneratorServiceProvider extends ServiceProvider
     /**
      * Register the command.
      */
-    protected function registerPipeMakeCommand()
-    {
-        $this->app->singleton('command.pipe.make', function ($app) {
-            return new Console\PipeMakeCommand($app['files']);
-        });
-    }
+    // protected function registerPipeMakeCommand()
+    // {
+    //     $this->app->singleton('command.pipe.make', function ($app) {
+    //         return new Console\PipeMakeCommand($app['files']);
+    //     });
+    // }
 
     /**
      * Register the command.

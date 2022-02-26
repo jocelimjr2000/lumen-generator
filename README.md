@@ -34,6 +34,9 @@ key:generate         Set the application key
 make:cast            Create a new custom Eloquent cast class
 make:channel         Create a new channel class
 make:command         Create a new Artisan command
+    Example:    php artisan make:command Test           Create only class
+    Example:    php artisan make:command Test true      Create class and include on app/console/kernel.php
+
 make:controller      Create a new controller class
 make:event           Create a new event class
 make:exception       Create a new custom exception class

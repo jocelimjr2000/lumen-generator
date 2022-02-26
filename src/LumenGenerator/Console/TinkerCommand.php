@@ -2,41 +2,32 @@
 
 namespace JocelimJr\LumenGenerator\Console;
 
-use Exception;
-use Psy\Shell;
-use Psy\Configuration;
-use Laravel\Lumen\Application;
 use Illuminate\Console\Command;
-use Illuminate\Support\Collection;
-use Illuminate\Database\Eloquent\Model;
-use Symfony\Component\VarDumper\Caster\Caster;
+use Illuminate\Support\Env;
+use Laravel\Tinker\ClassAliasAutoloader;
+use Psy\Configuration;
+use Psy\Shell;
+use Psy\VersionUpdater\Checker;
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputOption;
 
 class TinkerCommand extends Command
 {
     /**
-     * Illuminate application methods to include in the presenter.
+     * Artisan commands to include in the tinker shell.
      *
      * @var array
      */
-    protected static $appProperties = [
-        'environment',
-        'runningUnitTests',
-        'version',
-        'path',
-        'basePath',
-        'databasePath',
-        'getConfigurationPath',
-        'storagePath',
-        'getNamespace',
+    protected $commandWhitelist = [
+        'clear-compiled', 'down', 'env', 'inspire', 'migrate', 'migrate:install', 'optimize', 'up',
     ];
 
     /**
-     * The name and signature of the console command.
+     * The console command name.
      *
      * @var string
      */
-    protected $signature = 'tinker 
-                            {include? : Specify an `include` script}';
+    protected $name = 'tinker';
 
     /**
      * The console command description.
@@ -46,36 +37,75 @@ class TinkerCommand extends Command
     protected $description = 'Interact with your application';
 
     /**
-     * Create a new command instance.
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
-     * @return mixed
+     * @return int
      */
     public function handle()
     {
         $this->getApplication()->setCatchExceptions(false);
 
-        $config = new Configuration();
+        $config = Configuration::fromInput($this->input);
+        $config->setUpdateCheck(Checker::NEVER);
 
         $config->getPresenter()->addCasters(
             $this->getCasters()
         );
-  
-        $shell = new Shell($config);
 
-        $include = $this->argument('include');
-        if (file_exists($include)) {
-            $shell->setIncludes([$include]);
+        $shell = new Shell($config);
+        $shell->addCommands($this->getCommands());
+        $shell->setIncludes($this->argument('include'));
+
+        $path = Env::get('COMPOSER_VENDOR_DIR', $this->getLaravel()->basePath().DIRECTORY_SEPARATOR.'vendor');
+
+        $path .= '/composer/autoload_classmap.php';
+
+        $config = $this->getLaravel()->make('config');
+
+        $loader = ClassAliasAutoloader::register(
+            $shell, $path, $config->get('tinker.alias', []), $config->get('tinker.dont_alias', [])
+        );
+
+        if ($code = $this->option('execute')) {
+            try {
+                $shell->setOutput($this->output);
+                $shell->execute($code);
+            } finally {
+                $loader->unregister();
+            }
+
+            return 0;
         }
 
-        $shell->run();
+        try {
+            return $shell->run();
+        } finally {
+            $loader->unregister();
+        }
+    }
+
+    /**
+     * Get artisan commands to pass through to PsySH.
+     *
+     * @return array
+     */
+    protected function getCommands()
+    {
+        $commands = [];
+
+        foreach ($this->getApplication()->all() as $name => $command) {
+            if (in_array($name, $this->commandWhitelist)) {
+                $commands[] = $command;
+            }
+        }
+
+        $config = $this->getLaravel()->make('config');
+
+        foreach ($config->get('tinker.commands', []) as $command) {
+            $commands[] = $this->getApplication()->resolve($command);
+        }
+
+        return $commands;
     }
 
     /**
@@ -85,74 +115,46 @@ class TinkerCommand extends Command
      */
     protected function getCasters()
     {
+        $casters = [
+            'Illuminate\Support\Collection' => 'Laravel\Tinker\TinkerCaster::castCollection',
+            'Illuminate\Support\HtmlString' => 'Laravel\Tinker\TinkerCaster::castHtmlString',
+            'Illuminate\Support\Stringable' => 'Laravel\Tinker\TinkerCaster::castStringable',
+        ];
+
+        if (class_exists('Illuminate\Database\Eloquent\Model')) {
+            $casters['Illuminate\Database\Eloquent\Model'] = 'Laravel\Tinker\TinkerCaster::castModel';
+        }
+
+        if (class_exists('Illuminate\Foundation\Application')) {
+            $casters['Illuminate\Foundation\Application'] = 'Laravel\Tinker\TinkerCaster::castApplication';
+        }
+
+        $config = $this->getLaravel()->make('config');
+
+        return array_merge($casters, (array) $config->get('tinker.casters', []));
+    }
+
+    /**
+     * Get the console command arguments.
+     *
+     * @return array
+     */
+    protected function getArguments()
+    {
         return [
-            'Laravel\Lumen\Application' => 'JocelimJr\LumenGenerator\Console\TinkerCommand::castApplication',
-            'Illuminate\Support\Collection' => 'JocelimJr\LumenGenerator\Console\TinkerCommand::castCollection',
-            'Illuminate\Database\Eloquent\Model' => 'JocelimJr\LumenGenerator\Console\TinkerCommand::castModel',
+            ['include', InputArgument::IS_ARRAY, 'Include file(s) before starting tinker'],
         ];
     }
 
     /**
-     * Get an array representing the properties of a model.
-     *
-     * @param \Illuminate\Database\Eloquent\Model $model
+     * Get the console command options.
      *
      * @return array
      */
-    public static function castModel(Model $model)
-    {
-        $attributes = array_merge(
-            $model->getAttributes(),
-            $model->getRelations()
-        );
-
-        $visible = array_flip(
-            $model->getVisible() ?: array_diff(array_keys($attributes), $model->getHidden())
-        );
-
-        $results = [];
-
-        foreach (array_intersect_key($attributes, $visible) as $key => $value) {
-            $results[(isset($visible[$key]) ? Caster::PREFIX_VIRTUAL : Caster::PREFIX_PROTECTED).$key] = $value;
-        }
-
-        return $results;
-    }
-
-    /**
-     * Get an array representing the properties of an application.
-     *
-     * @param \Illuminate\Foundation\Application $app
-     *
-     * @return array
-     */
-    public static function castApplication(Application $app)
-    {
-        $results = [];
-
-        foreach (self::$appProperties as $property) {
-            try {
-                $val = $app->$property();
-
-                $results[Caster::PREFIX_VIRTUAL.lcfirst(preg_replace('/^get/', '', $property))] = $val;
-            } catch (Exception $e) {
-            }
-        }
-
-        return $results;
-    }
-
-    /**
-     * Get an array representing the properties of a collection.
-     *
-     * @param \Illuminate\Support\Collection $collection
-     *
-     * @return array
-     */
-    public static function castCollection(Collection $collection)
+    protected function getOptions()
     {
         return [
-            Caster::PREFIX_VIRTUAL.'all' => $collection->all(),
+            ['execute', null, InputOption::VALUE_OPTIONAL, 'Execute the given code using Tinker'],
         ];
     }
 }
