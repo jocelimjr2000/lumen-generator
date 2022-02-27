@@ -3,7 +3,7 @@
 namespace JocelimJr\LumenGenerator\Console;
 
 use Illuminate\Console\Concerns\CreatesMatchingTest;
-use JocelimJr\LumenGenerator\GeneratorCommand;
+use Illuminate\Console\GeneratorCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 
@@ -41,6 +41,22 @@ class ConsoleMakeCommand extends GeneratorCommand
      */
     protected $type = 'Console command';
     protected $kernel;
+
+    /**
+     * Execute the console command.
+     *
+     * @return void
+     */
+    public function handle()
+    {
+        if (parent::handle() === false && ! $this->option('force')) {
+            return false;
+        }
+
+        if($this->argument('kernel') && $this->argument('kernel') == true){
+            $this->appendKernel($this->qualifyClass($this->getNameInput()));
+        }
+    }
 
     /**
      * Replace the class name for the given stub.
@@ -109,37 +125,34 @@ class ConsoleMakeCommand extends GeneratorCommand
     }
     
     /**
-     * Execute callback after the command has been executed
      * Include class on app/Console/Kernel.php
      * 
      * @return void
      */
-    protected function callback(string $inputName, string $completeName)
+    protected function appendKernel(string $completeName)
     {
-        if($this->argument('kernel') && $this->argument('kernel') == true){
+        $kernelFile = $this->laravel->basePath('app/Console/Kernel.php');
+        $kernelContent = $this->files->get($kernelFile);
 
-            $kernelFile = $this->laravel->basePath('app/Console/Kernel.php');
-            $kernelContent = $this->files->get($kernelFile);
+        preg_match('/protected \$commands = \[(.*?)\];/s', $kernelContent, $commands);
+        $currentCommands = $commands[0];
+        
+        $classes = trim($commands[1]);
+        $classes = preg_replace('/\s+/', '', $classes);
 
-            preg_match('/protected \$commands = \[(.*?)\];/s', $kernelContent, $commands);
-            $currentCommands = $commands[0];
-            
-            $classes = trim($commands[1]);
-            $classes = preg_replace('/\s+/', '', $classes);
-
-            if($classes == '//' || empty($classes)){
-                $classes = '';
-            }else if(substr($classes, -1) !== ','){
-                $classes .= ',';
-            }
-
-            $classes .= '\\' . $completeName . '::class';
-            
-            $newCommands = 'protected $commands = [' . PHP_EOL .
-                            "\t\t" . str_replace(',', ',' . PHP_EOL . "\t\t", $classes) . PHP_EOL .
-                            "\t];";
-
-            $this->files->put($kernelFile, str_replace($currentCommands, $newCommands, $kernelContent));
+        if($classes == '//' || empty($classes)){
+            $classes = '';
+        }else if(substr($classes, -1) !== ','){
+            $classes .= ',';
         }
+
+        $classes .= '\\' . $completeName . '::class';
+        
+        $newCommands = 'protected $commands = [' . PHP_EOL .
+                        "\t\t" . str_replace(',', ',' . PHP_EOL . "\t\t", $classes) . PHP_EOL .
+                        "\t];";
+
+        $this->files->put($kernelFile, str_replace($currentCommands, $newCommands, $kernelContent));
     }
+
 }

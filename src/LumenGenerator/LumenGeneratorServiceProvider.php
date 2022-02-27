@@ -57,6 +57,8 @@ class LumenGeneratorServiceProvider extends ServiceProvider
         'SchemaDump' => 'command.schema.dump',
         'CastMake' => 'command.cast.make',
         'RuleMake' => 'command.rule.make',
+        'RepositoryMake' => 'command.repository.make',
+        'InterfaceMake' => 'command.interface.make',
     ];
 
     /**
@@ -359,6 +361,9 @@ class LumenGeneratorServiceProvider extends ServiceProvider
         });
     }
 
+    /**
+     * Register the command.
+     */
     protected function registerCastMakeCommand()
     {
         $this->app->singleton('command.cast.make', function ($app) {
@@ -366,10 +371,33 @@ class LumenGeneratorServiceProvider extends ServiceProvider
         });
     }
 
+    /**
+     * Register the command.
+     */
     protected function registerRuleMakeCommand()
     {
         $this->app->singleton('command.rule.make', function ($app) {
             return new Console\RuleMakeCommand($app['files']);
+        });
+    }
+
+    /**
+     * Register the command.
+     */
+    protected function registerRepositoryMakeCommand()
+    {
+        $this->app->singleton('command.repository.make', function ($app) {
+            return new Console\RepositoryMakeCommand($app['files']);
+        });
+    }
+
+    /**
+     * Register the command.
+     */
+    protected function registerInterfaceMakeCommand()
+    {
+        $this->app->singleton('command.interface.make', function ($app) {
+            return new Console\InterfaceMakeCommand($app['files']);
         });
     }
 

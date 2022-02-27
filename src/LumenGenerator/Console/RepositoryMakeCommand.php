@@ -3,16 +3,17 @@
 namespace JocelimJr\LumenGenerator\Console;
 
 use Illuminate\Console\GeneratorCommand;
-use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Input\InputArgument;
+use Illuminate\Support\Str;
 
-class ResourceMakeCommand extends GeneratorCommand
+class RepositoryMakeCommand extends GeneratorCommand
 {
     /**
      * The console command name.
      *
      * @var string
      */
-    protected $name = 'make:resource';
+    protected $name = 'make:repository';
 
     /**
      * The name of the console command.
@@ -21,21 +22,21 @@ class ResourceMakeCommand extends GeneratorCommand
      *
      * @var string|null
      */
-    protected static $defaultName = 'make:resource';
+    protected static $defaultName = 'make:repository';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Create a new resource';
+    protected $description = 'Create a new repository';
 
     /**
      * The type of class being generated.
      *
      * @var string
      */
-    protected $type = 'Resource';
+    protected $type = 'Repository';
 
     /**
      * Execute the console command.
@@ -44,11 +45,26 @@ class ResourceMakeCommand extends GeneratorCommand
      */
     public function handle()
     {
-        if ($this->collection()) {
-            $this->type = 'Resource collection';
+        if (parent::handle() === false && ! $this->option('force')) {
+            return false;
         }
 
-        parent::handle();
+        $this->call('make:interface', [
+            'name' => $this->getNameInput() . 'Repository'
+        ]);
+    }
+
+    /**
+     * Get the destination class path.
+     *
+     * @param  string  $name
+     * @return string
+     */
+    protected function getPath($name)
+    {
+        $name = (string) Str::of($name)->replaceFirst($this->rootNamespace(), '')->finish('Repository');
+
+        return $this->laravel->basePath().'/app/'.str_replace('\\', '/', $name).'.php';
     }
 
     /**
@@ -58,20 +74,7 @@ class ResourceMakeCommand extends GeneratorCommand
      */
     protected function getStub()
     {
-        return $this->collection()
-                    ? $this->resolveStubPath('/stubs/resource-collection.stub')
-                    : $this->resolveStubPath('/stubs/resource.stub');
-    }
-
-    /**
-     * Determine if the command is generating a resource collection.
-     *
-     * @return bool
-     */
-    protected function collection()
-    {
-        return $this->option('collection') ||
-               str_ends_with($this->argument('name'), 'Collection');
+        return $this->resolveStubPath('/stubs/repository.stub');
     }
 
     /**
@@ -83,8 +86,8 @@ class ResourceMakeCommand extends GeneratorCommand
     protected function resolveStubPath($stub)
     {
         return file_exists($customPath = $this->laravel->basePath(trim($stub, '/')))
-                        ? $customPath
-                        : __DIR__.$stub;
+            ? $customPath
+            : __DIR__.$stub;
     }
 
     /**
@@ -95,18 +98,19 @@ class ResourceMakeCommand extends GeneratorCommand
      */
     protected function getDefaultNamespace($rootNamespace)
     {
-        return $rootNamespace.'\Http\Resources';
+        return $rootNamespace.'\Repositories';
     }
 
     /**
-     * Get the console command options.
+     * Get the console command arguments.
      *
      * @return array
      */
-    protected function getOptions()
+    protected function getArguments()
     {
         return [
-            ['collection', 'c', InputOption::VALUE_NONE, 'Create a resource collection'],
+            ['name', InputArgument::REQUIRED, 'The name of the command'],
         ];
     }
+
 }

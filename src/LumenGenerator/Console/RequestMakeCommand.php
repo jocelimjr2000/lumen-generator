@@ -2,7 +2,7 @@
 
 namespace JocelimJr\LumenGenerator\Console;
 
-use JocelimJr\LumenGenerator\GeneratorCommand;
+use Illuminate\Console\GeneratorCommand;
 
 class RequestMakeCommand extends GeneratorCommand
 {

@@ -1,0 +1,10 @@
+<?php
+
+namespace {{ namespace }};
+
+use App\Interfaces\{{ class }}RepositoryInterface;
+
+class {{ class }}Repository implements {{ class }}RepositoryInterface
+{
+
+}

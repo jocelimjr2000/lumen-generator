@@ -2,7 +2,7 @@
 
 namespace JocelimJr\LumenGenerator\Console;
 
-use JocelimJr\LumenGenerator\GeneratorCommand;
+use Illuminate\Console\GeneratorCommand;
 use Illuminate\Support\Str;
 use Symfony\Component\Console\Input\InputOption;
 

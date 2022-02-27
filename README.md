@@ -56,6 +56,8 @@ make:resource        Create a new resource
 make:rule            Create a new rule
 make:seeder          Create a new seeder class
 make:test            Create a new test class
+make:interface       Create a new interface
+make:repository      Create a new repository class and interface
 
 notifications:table  Create a migration for the notifications table
 

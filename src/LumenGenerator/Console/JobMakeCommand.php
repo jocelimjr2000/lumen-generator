@@ -3,7 +3,7 @@
 namespace JocelimJr\LumenGenerator\Console;
 
 use Illuminate\Console\Concerns\CreatesMatchingTest;
-use JocelimJr\LumenGenerator\GeneratorCommand;
+use Illuminate\Console\GeneratorCommand;
 use Symfony\Component\Console\Input\InputOption;
 
 class JobMakeCommand extends GeneratorCommand

@@ -3,15 +3,17 @@
 namespace JocelimJr\LumenGenerator\Console;
 
 use Illuminate\Console\GeneratorCommand;
+use Symfony\Component\Console\Input\InputArgument;
+use Illuminate\Support\Str;
 
-class CastMakeCommand extends GeneratorCommand
+class InterfaceMakeCommand extends GeneratorCommand
 {
     /**
      * The console command name.
      *
      * @var string
      */
-    protected $name = 'make:cast';
+    protected $name = 'make:interface';
 
     /**
      * The name of the console command.
@@ -20,21 +22,34 @@ class CastMakeCommand extends GeneratorCommand
      *
      * @var string|null
      */
-    protected static $defaultName = 'make:cast';
+    protected static $defaultName = 'make:interface';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Create a new custom Eloquent cast class';
+    protected $description = 'Create a new interface';
 
     /**
      * The type of class being generated.
      *
      * @var string
      */
-    protected $type = 'Cast';
+    protected $type = 'Interface';
+
+    /**
+     * Get the destination class path.
+     *
+     * @param  string  $name
+     * @return string
+     */
+    protected function getPath($name)
+    {
+        $name = (string) Str::of($name)->replaceFirst($this->rootNamespace(), '')->finish('Interface');
+
+        return $this->laravel->basePath().'/app/'.str_replace('\\', '/', $name).'.php';
+    }
 
     /**
      * Get the stub file for the generator.
@@ -43,7 +58,7 @@ class CastMakeCommand extends GeneratorCommand
      */
     protected function getStub()
     {
-        return $this->resolveStubPath('/stubs/cast.stub');
+        return $this->resolveStubPath('/stubs/interface.stub');
     }
 
     /**
@@ -67,6 +82,18 @@ class CastMakeCommand extends GeneratorCommand
      */
     protected function getDefaultNamespace($rootNamespace)
     {
-        return $rootNamespace.'\Casts';
+        return $rootNamespace.'\Interfaces';
+    }
+
+    /**
+     * Get the console command arguments.
+     *
+     * @return array
+     */
+    protected function getArguments()
+    {
+        return [
+            ['name', InputArgument::REQUIRED, 'The name of the command'],
+        ];
     }
 }
