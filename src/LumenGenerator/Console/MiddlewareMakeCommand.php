@@ -3,7 +3,7 @@
 namespace JocelimJr\LumenGenerator\Console;
 
 use Illuminate\Console\Concerns\CreatesMatchingTest;
-use Illuminate\Console\GeneratorCommand;
+use JocelimJr\LumenGenerator\GeneratorCommand;
 
 class MiddlewareMakeCommand extends GeneratorCommand
 {

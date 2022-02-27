@@ -36,14 +36,10 @@ class ClearCompiledCommand extends Command
      */
     public function handle()
     {
-        if (is_file($servicesPath = $this->laravel->getCachedServicesPath())) {
-            @unlink($servicesPath);
-        }
+        $compiledPath = base_path('bootstrap/cache/compiled.php');
 
-        if (is_file($packagesPath = $this->laravel->getCachedPackagesPath())) {
-            @unlink($packagesPath);
+        if (file_exists($compiledPath)) {
+            @unlink($compiledPath);
         }
-
-        $this->info('Compiled services and packages files removed!');
     }
 }

@@ -2,28 +2,30 @@
 
 namespace JocelimJr\LumenGenerator\Console;
 
-class RuleMakeCommand extends GeneratorCommand
+use JocelimJr\LumenGenerator\GeneratorCommand;
+
+class PipeMakeCommand extends GeneratorCommand
 {
     /**
      * The console command name.
      *
      * @var string
      */
-    protected $name = 'make:rule';
+    protected $name = 'make:pipe';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Create a new validation rule';
+    protected $description = 'Create a new pipe class';
 
     /**
      * The type of class being generated.
      *
      * @var string
      */
-    protected $type = 'Rule';
+    protected $type = 'Pipe';
 
     /**
      * Get the stub file for the generator.
@@ -32,17 +34,18 @@ class RuleMakeCommand extends GeneratorCommand
      */
     protected function getStub()
     {
-        return __DIR__ . DIRECTORY_SEPARATOR . 'stubs' . DIRECTORY_SEPARATOR . 'rule.stub';
+        return __DIR__.'/stubs/pipe.stub';
     }
 
     /**
      * Get the default namespace for the class.
      *
-     * @param  string  $rootNamespace
+     * @param string $rootNamespace
+     *
      * @return string
      */
     protected function getDefaultNamespace($rootNamespace)
     {
-        return $rootNamespace.'\Rules';
+        return $rootNamespace.'\Pipes';
     }
 }

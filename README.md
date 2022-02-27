@@ -1,4 +1,4 @@
-# Lumen Generator
+# Lumen Generator for Lumen 9
 
 [![Total Downloads](https://poser.pugx.org/jocelimjr/lumen-generator/d/total.svg)](https://packagist.org/packages/jocelimjr/lumen-generator)
 [![Latest Stable Version](https://poser.pugx.org/jocelimjr/lumen-generator/v/stable.svg)](https://packagist.org/packages/jocelimjr/lumen-generator)

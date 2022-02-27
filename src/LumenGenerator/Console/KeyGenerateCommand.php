@@ -99,10 +99,10 @@ class KeyGenerateCommand extends Command
      */
     protected function writeNewEnvironmentFileWith($key)
     {
-        file_put_contents($this->laravel->environmentFilePath(), preg_replace(
+        file_put_contents($this->laravel->basePath('.env'), preg_replace(
             $this->keyReplacementPattern(),
             'APP_KEY='.$key,
-            file_get_contents($this->laravel->environmentFilePath())
+            file_get_contents($this->laravel->basePath('.env'))
         ));
     }
 

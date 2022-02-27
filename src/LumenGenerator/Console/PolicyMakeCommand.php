@@ -2,9 +2,8 @@
 
 namespace JocelimJr\LumenGenerator\Console;
 
-use Illuminate\Console\GeneratorCommand;
+use JocelimJr\LumenGenerator\GeneratorCommand;
 use Illuminate\Support\Str;
-use LogicException;
 use Symfony\Component\Console\Input\InputOption;
 
 class PolicyMakeCommand extends GeneratorCommand
@@ -47,60 +46,11 @@ class PolicyMakeCommand extends GeneratorCommand
      */
     protected function buildClass($name)
     {
-        $stub = $this->replaceUserNamespace(
-            parent::buildClass($name)
-        );
+        $stub = parent::buildClass($name);
 
         $model = $this->option('model');
 
         return $model ? $this->replaceModel($stub, $model) : $stub;
-    }
-
-    /**
-     * Replace the User model namespace.
-     *
-     * @param  string  $stub
-     * @return string
-     */
-    protected function replaceUserNamespace($stub)
-    {
-        $model = $this->userProviderModel();
-
-        if (! $model) {
-            return $stub;
-        }
-
-        return str_replace(
-            $this->rootNamespace().'User',
-            $model,
-            $stub
-        );
-    }
-
-    /**
-     * Get the model for the guard's user provider.
-     *
-     * @return string|null
-     *
-     * @throws \LogicException
-     */
-    protected function userProviderModel()
-    {
-        $config = $this->laravel['config'];
-
-        $guard = $this->option('guard') ?: $config->get('auth.defaults.guard');
-
-        if (is_null($guardProvider = $config->get('auth.guards.'.$guard.'.provider'))) {
-            throw new LogicException('The ['.$guard.'] guard is not defined in your "auth" configuration file.');
-        }
-
-        if (! $config->get('auth.providers.'.$guardProvider.'.model')) {
-            return 'App\\Models\\User';
-        }
-
-        return $config->get(
-            'auth.providers.'.$guardProvider.'.model'
-        );
     }
 
     /**

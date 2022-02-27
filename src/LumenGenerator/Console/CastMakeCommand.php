@@ -2,7 +2,7 @@
 
 namespace JocelimJr\LumenGenerator\Console;
 
-use Illuminate\Console\GeneratorCommand;
+use JocelimJr\LumenGenerator\GeneratorCommand;
 
 class CastMakeCommand extends GeneratorCommand
 {

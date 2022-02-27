@@ -3,7 +3,6 @@
 namespace JocelimJr\LumenGenerator\Console;
 
 use Illuminate\Console\Concerns\CreatesMatchingTest;
-// use Illuminate\Console\GeneratorCommand;
 use JocelimJr\LumenGenerator\GeneratorCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
