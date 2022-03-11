@@ -131,7 +131,7 @@ class FactoryMakeCommand extends GeneratorCommand
             return $modelName;
         }
 
-        if (is_dir(app_path('Models/'))) {
+        if (is_dir(app()->basePath('Models/'))) {
             return $this->rootNamespace().'Models\Model';
         }
 
